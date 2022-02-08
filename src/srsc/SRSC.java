@@ -5,6 +5,8 @@ package srsc;
 import srsc.packet.PacketType;
 import srsc.packet.Packet;
 import com.fazecast.jSerialComm.SerialPort;
+import java.util.HashMap;
+import srsc.packet.PayloadSize;
 
 /**
  *
@@ -13,8 +15,10 @@ import com.fazecast.jSerialComm.SerialPort;
 public class SRSC {
     
     private final SerialPort port;
+    private final HashMap<Byte, PacketType> packetTypes;
     
     public SRSC(byte port) {
+        packetTypes = new HashMap<>();
         final SerialPort[] ports = SerialPort.getCommPorts();
         
         if (port >= ports.length) {
@@ -50,6 +54,18 @@ public class SRSC {
     
     public void writeBinaryPacket(PacketType packetType, byte[] binaryPayload) {
         
+    }
+    
+    public void definePacketType(byte packetTypeIdentifier, PayloadSize payloadSize, boolean isCritical) throws Exception {
+        if (packetTypes.containsKey(packetTypeIdentifier)) {
+            throw new Exception("This packet type is already defined!");
+        }
+        
+        packetTypes.put(packetTypeIdentifier, new PacketType(packetTypeIdentifier, payloadSize, isCritical));
+    }
+    
+    public void definePacketType(byte packetTypeIdentifier, PayloadSize payloadSize) throws Exception {
+        definePacketType(packetTypeIdentifier, payloadSize, false);
     }
     
 }
