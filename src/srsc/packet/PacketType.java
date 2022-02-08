@@ -16,6 +16,10 @@ public class PacketType {
         this.payloadSize = payloadSize;
         this.critical = critical;
     }
+    
+    public PacketType(byte packetTypeIdentifier, PayloadSize payloadSize) {
+        this(packetTypeIdentifier, payloadSize, false);
+    }
 
     public byte getPacketTypeIdentifier() {
         return packetTypeIdentifier;
