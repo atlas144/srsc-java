@@ -26,6 +26,16 @@ public class SRSC {
         } else {
             this.port = ports[port];
         }
+        
+        packetTypes.put((byte) 0, new PacketType((byte) 0, PayloadSize.INT));
+        packetTypes.put((byte) 1, new PacketType((byte) 1, PayloadSize.INT));
+        packetTypes.put((byte) 2, new PacketType((byte) 2, PayloadSize.COMMAND));
+        packetTypes.put((byte) 64, new PacketType((byte) 64, PayloadSize.BYTE));
+        packetTypes.put((byte) 65, new PacketType((byte) 65, PayloadSize.SHORT));
+        packetTypes.put((byte) 66, new PacketType((byte) 66, PayloadSize.INT));
+        packetTypes.put((byte) 67, new PacketType((byte) 67, PayloadSize.BYTE, true));
+        packetTypes.put((byte) 68, new PacketType((byte) 68, PayloadSize.SHORT, true));
+        packetTypes.put((byte) 69, new PacketType((byte) 69, PayloadSize.INT, true));
     }
     
     public void begin() {
