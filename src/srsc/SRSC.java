@@ -16,9 +16,12 @@ public class SRSC {
     
     private final SerialPort port;
     private final HashMap<Byte, PacketType> packetTypes;
+    private final Semaphore semaphore;
+    private final PacketReader packetReader;
     
     public SRSC(byte port) {
         packetTypes = new HashMap<>();
+        semaphore = new Semaphore(64);
         final SerialPort[] ports = SerialPort.getCommPorts();
         
         if (port >= ports.length) {
@@ -26,6 +29,8 @@ public class SRSC {
         } else {
             this.port = ports[port];
         }
+        
+        packetReader = new PacketReader(this.port, packetTypes, semaphore, this);
         
         packetTypes.put((byte) 0, new PacketType((byte) 0, PayloadSize.INT));
         packetTypes.put((byte) 1, new PacketType((byte) 1, PayloadSize.INT));
@@ -40,10 +45,6 @@ public class SRSC {
     
     public void begin() {
         port.openPort();
-    }
-    
-    public Packet readPacket() {
-        
     }
     
     public void writePacket(PacketType packetType, int payload) {
@@ -76,6 +77,10 @@ public class SRSC {
     
     public void definePacketType(byte packetTypeIdentifier, PayloadSize payloadSize) throws Exception {
         definePacketType(packetTypeIdentifier, payloadSize, false);
+    }
+    
+    public void registerOnPacketArrivedCallback(PacketArrivedCallback callback) {
+        packetReader.registerOnPacketArrivedCallback(callback);
     }
     
 }
