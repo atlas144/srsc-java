@@ -7,8 +7,6 @@ import com.fazecast.jSerialComm.SerialPortDataListener;
 import com.fazecast.jSerialComm.SerialPortEvent;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import srsc.packet.Packet;
 import srsc.packet.PacketType;
 import srsc.packet.PayloadSize;
@@ -20,10 +18,11 @@ import srsc.packet.PayloadSize;
 public class PacketReader implements SerialPortDataListener {
 
     private final SerialPort port;
+    private final ConnectionStatus connectionStatus;
     private final HashMap<Byte, PacketType> packetTypes;
     private final byte[] acceptedCriticalPackets;
     private final Semaphore semaphore;
-    private final SRSC srsc;
+    private final PacketWriter packetWriter;
     private PacketArrivedCallback onPacketArrivedCallback;
     
     private boolean validateChecksum(byte[] binaryPacket) {
@@ -74,8 +73,9 @@ public class PacketReader implements SerialPortDataListener {
             acceptedCriticalPacket = (byte) 255;
         }
         
+        connectionStatus.setConnected(true);
         System.out.println("Arrived CONNECT packet");
-        srsc.writePacket(packetTypes.get(0x01), 0);
+        packetWriter.writePacket(packetTypes.get(0x01), 0);
     }
     
     private void processConnackPacket(Packet packet) {
@@ -85,63 +85,68 @@ public class PacketReader implements SerialPortDataListener {
         for (byte acceptedCriticalPacket : acceptedCriticalPackets) {
             acceptedCriticalPacket = (byte) 255;
         }
-        
+    
+        connectionStatus.setConnected(true);    
         System.out.println("Arrived CONNACK packet");
     }
     
     private void processBinaryPacket(byte[] binaryPacket) {
         PacketType packetType = packetTypes.get(binaryPacket[0]);
         
-        if (packetType != null) {
-            if (packetType.getPacketTypeIdentifier() == 0x02) {
-                System.out.println("Arrived ACCEPTACK packet");
-                semaphore.increase();
-
-                return;
-            }
-
-            if (!validateChecksum(binaryPacket)) {
-                System.out.println("Arrived corrupted packet!");
-
-                return;
-            }
-            
-            if (packetType.isCritical()) {                
-                if (acceptedCriticalPackets[binaryPacket[2] % 10] == binaryPacket[2]) {
-                    return;
-                } else {
-                    acceptedCriticalPackets[binaryPacket[2] % 10] = binaryPacket[2];
-                }
-            }
-
-            try {
-                Packet packet = buildPacket(binaryPacket);
-
-                switch (packetType.getPacketTypeIdentifier()) {
-                    case 0x00:
-                        processConnectPacket(packet);
-                        break;
-                    case 0x01:
-                        processConnackPacket(packet);
-                        break;
-                    default:
-                        onPacketArrivedCallback.onPacketArrived(packet);
-                        break;
-                }
-            } catch (Exception ex) {
-                Logger.getLogger(PacketReader.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        } else {
+        if (packetType == null) {
             System.out.println("Arrived packet with unknown type!");
+            return;
+        } else if (!connectionStatus.isConnected() && packetType.getPacketTypeIdentifier() > 0x01) {
+            return;
+        }
+        
+        if (packetType.getPacketTypeIdentifier() == 0x02) {
+            System.out.println("Arrived ACCEPTACK packet");
+            semaphore.increase();
+
+            return;
+        }
+
+        if (!validateChecksum(binaryPacket)) {
+            System.out.println("Arrived corrupted packet!");
+
+            return;
+        }
+
+        if (packetType.isCritical()) {                
+            if (acceptedCriticalPackets[binaryPacket[2] % 10] == binaryPacket[2]) {
+                return;
+            } else {
+                acceptedCriticalPackets[binaryPacket[2] % 10] = binaryPacket[2];
+            }
+        }
+
+        try {
+            Packet packet = buildPacket(binaryPacket);
+
+            switch (packetType.getPacketTypeIdentifier()) {
+                case 0x00:
+                    processConnectPacket(packet);
+                    break;
+                case 0x01:
+                    processConnackPacket(packet);
+                    break;
+                default:
+                    onPacketArrivedCallback.onPacketArrived(packet);
+                    break;
+            }
+        } catch (Exception exception) {
+            System.out.println(exception.getMessage());
         }
     }
     
-    public PacketReader(SerialPort port, HashMap<Byte, PacketType> packetTypes, Semaphore semaphore, SRSC srsc) {
+    public PacketReader(SerialPort port, ConnectionStatus connectionStatus, HashMap<Byte, PacketType> packetTypes, Semaphore semaphore, PacketWriter packetWriter) {
         this.port = port;
+        this.connectionStatus = connectionStatus;
         this.packetTypes = packetTypes;
         acceptedCriticalPackets = new byte[10];
         this.semaphore = semaphore;
-        this.srsc = srsc;
+        this.packetWriter = packetWriter;
         onPacketArrivedCallback = (Packet packet) -> {};
     }
 

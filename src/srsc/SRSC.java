@@ -3,7 +3,6 @@
 package srsc;
 
 import srsc.packet.PacketType;
-import srsc.packet.Packet;
 import com.fazecast.jSerialComm.SerialPort;
 import java.util.HashMap;
 import srsc.packet.PayloadSize;
@@ -15,13 +14,16 @@ import srsc.packet.PayloadSize;
 public class SRSC {
     
     private final SerialPort port;
+    private final ConnectionStatus connectionStatus;
     private final HashMap<Byte, PacketType> packetTypes;
     private final Semaphore semaphore;
     private final PacketReader packetReader;
+    private final PacketWriter packetWriter;
     
     public static final byte MAX_PACKET_SIZE = 7;
     
     public SRSC(byte port) {
+        connectionStatus = new ConnectionStatus();
         packetTypes = new HashMap<>();
         semaphore = new Semaphore(64);
         final SerialPort[] ports = SerialPort.getCommPorts();
@@ -32,7 +34,8 @@ public class SRSC {
             this.port = ports[port];
         }
         
-        packetReader = new PacketReader(this.port, packetTypes, semaphore, this);
+        packetWriter = new PacketWriter(this.port, connectionStatus);
+        packetReader = new PacketReader(this.port, connectionStatus, packetTypes, semaphore, packetWriter);
         
         packetTypes.put((byte) 0, new PacketType((byte) 0, PayloadSize.INT));
         packetTypes.put((byte) 1, new PacketType((byte) 1, PayloadSize.INT));
@@ -47,6 +50,13 @@ public class SRSC {
     
     public void begin() {
         port.openPort();
+                
+        try {
+            while (!connectionStatus.isConnected()) {    
+                packetWriter.writePacket(packetTypes.get(0x00), 0);
+                Thread.sleep(500);
+            }
+        } catch (InterruptedException ex) {}
     }
     
     public void writePacket(PacketType packetType, int payload) {
