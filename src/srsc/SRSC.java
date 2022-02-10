@@ -71,7 +71,7 @@ public class SRSC {
                         System.out.print(".");
                         packetWriter.writePacket(packetTypes.get(0x00), 0);
                         Thread.sleep(500);
-                    } catch (Exception ex) {
+                    } catch (SerialBufferFullException ex) {
                         System.out.println("\nOposite serial buffer is full - waiting for 5000 ms");
                         Thread.sleep(5000);
                     }
