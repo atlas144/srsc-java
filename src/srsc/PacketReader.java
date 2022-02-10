@@ -43,7 +43,7 @@ public class PacketReader implements SerialPortDataListener {
         int payload = binaryPayload[0];
 
         for (byte i = 1; i < binaryPayload.length; i++) {
-            payload += binaryPayload[i] * (255 * i);
+            payload += binaryPayload[i] * (256 * i);
         }
         
         return payload;
@@ -75,7 +75,10 @@ public class PacketReader implements SerialPortDataListener {
         
         connectionStatus.setConnected(true);
         System.out.println("Arrived CONNECT packet");
-        packetWriter.writePacket(packetTypes.get(0x01), 0);
+
+        try {
+            packetWriter.writePacket(packetTypes.get(0x01), 0);
+        } catch (Exception ex) {}
     }
     
     private void processConnackPacket(Packet packet) {

@@ -13,6 +13,7 @@ import srsc.packet.PacketType;
 public class PacketWriter {
     
     private final SerialPort port;
+    private final Semaphore semaphore;
     
     private byte countChecksum(Packet packet, byte id) {
         byte checksum = (byte) (packet.getPacketTypeIdentifier() + id);
@@ -24,14 +25,15 @@ public class PacketWriter {
         return (byte) ~checksum;
     }
     
-    public PacketWriter(SerialPort port) {
+    public PacketWriter(SerialPort port, Semaphore semaphore) {
         this.port = port;
+        this.semaphore = semaphore;
     }
     
-    public void writePacket(Packet packet, byte id) {
-        byte binaryPacketSize = (byte) (2 + (packet.isCritical() ? 1 : 0) + packet.getPacketType().getPayloadSize().getValue());
-        byte[] binaryPacket = new byte[binaryPacketSize];
+    public void writePacket(Packet packet, byte id) throws Exception {
         byte payloadOffset = 2;
+        byte binaryPacketSize = (byte) (payloadOffset + (packet.isCritical() ? 1 : 0) + packet.getPacketType().getPayloadSize().getValue());
+        byte[] binaryPacket = new byte[binaryPacketSize];
         
         binaryPacket[0] = packet.getPacketTypeIdentifier();
         binaryPacket[1] = countChecksum(packet, id);
@@ -43,18 +45,19 @@ public class PacketWriter {
         
         System.arraycopy(packet.getBinaryPayload(), 0, binaryPacket, payloadOffset, packet.getPayloadSize().getValue());
         
+        semaphore.decrease();
         port.writeBytes(binaryPacket, binaryPacketSize);
     }
     
-    public void writePacket(Packet packet) {
+    public void writePacket(Packet packet) throws Exception {
         writePacket(packet, (byte) 0);
     }
     
-    public void writePacket(PacketType packetType, byte id, int payload) {
+    public void writePacket(PacketType packetType, byte id, int payload) throws Exception {
         writePacket(new Packet(packetType, payload), id);
     }
     
-    public void writePacket(PacketType packetType, int payload) {
+    public void writePacket(PacketType packetType, int payload) throws Exception {
         writePacket(new Packet(packetType, payload));
     }
     

@@ -33,10 +33,14 @@ public class Semaphore {
     }
     
     public void increase() {
-        counter++;
+        if (counter < size) counter++;
     }
     
-    public void decrease() {
+    public void decrease() throws Exception {
+        if (counter <= 0) {
+            throw new Exception("Oposite serial buffer is full!");
+        }
+        
         counter--;
     }
     
