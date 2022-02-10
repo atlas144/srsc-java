@@ -60,23 +60,15 @@ public class SRSC {
     }
     
     public void writePacket(PacketType packetType, int payload) {
-        
+        for (int i = 0; i < (packetType.isCritical() ? 5 : 1); i++) {
+            packetWriter.writePacket(packetType, payload);
+        }
     }
     
-    public void writePacket(PacketType packetType, short payload) {
-        
-    }
-    
-    public void writePacket(PacketType packetType, byte payload) {
-        
-    }
-    
-    public void writePacket(PacketType packetType) {
-        
-    }
-    
-    public void writeBinaryPacket(PacketType packetType, byte[] binaryPayload) {
-        
+    public void writePacket(PacketType packetType) throws Exception {
+        for (int i = 0; i < (packetType.isCritical() ? 5 : 1); i++) {
+            packetWriter.writePacket(packetType);
+        }
     }
     
     public void definePacketType(byte packetTypeIdentifier, PayloadSize payloadSize, boolean isCritical) throws Exception {
