@@ -22,11 +22,11 @@ public class Packet {
         }
     }
     
-    public Packet(PacketType packetType) throws IllegalArgumentException {
+    public Packet(PacketType packetType) throws Exception {
         this(packetType, 0);
         
         if (packetType.getPayloadSize() == PayloadSize.COMMAND) {
-            throw new IllegalArgumentException(String.format("Packet with type %d must have payload!", packetType.getPacketTypeIdentifier()));
+            throw new Exception(String.format("Packet with type %d must have payload!", packetType.getPacketTypeIdentifier()));
         }
     }
 

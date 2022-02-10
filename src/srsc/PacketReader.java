@@ -7,6 +7,8 @@ import com.fazecast.jSerialComm.SerialPortDataListener;
 import com.fazecast.jSerialComm.SerialPortEvent;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import srsc.packet.Packet;
 import srsc.packet.PacketType;
 import srsc.packet.PayloadSize;
@@ -27,24 +29,28 @@ public class PacketReader implements SerialPortDataListener {
     private boolean validateChecksum(byte[] binaryPacket) {
         byte validationSum = 0;
 
-        for (byte i = 0; i < binaryPacket.length; i++) {
-          validationSum += binaryPacket[i];
+        for (byte packetByte : binaryPacket) {
+            validationSum += packetByte;
         }
 
         return validationSum == 255;
     }
     
-    private int parseBinaryPayload(byte[] binaryPayload) {
-        int payload = 0;
+    private int parseBinaryPayload(byte[] binaryPayload) throws Exception {
+        if (binaryPayload.length < 1) {
+            throw new Exception("Packet payload parsing failed");
+        }
+        
+        int payload = binaryPayload[0];
 
-        for (byte i = 0; i < binaryPayload.length; i++) {
+        for (byte i = 1; i < binaryPayload.length; i++) {
             payload += binaryPayload[i] * (255 * i);
         }
         
         return payload;
     }
     
-    private Packet buildPacket(byte[] binaryPacket) throws IllegalArgumentException {
+    private Packet buildPacket(byte[] binaryPacket) throws Exception {
         Packet packet;
         PacketType packetType = packetTypes.get(binaryPacket[0]);
         
@@ -61,7 +67,7 @@ public class PacketReader implements SerialPortDataListener {
     }
     
     private void processConnectPacket(Packet packet) {
-        semaphore.setSize(packet.getPayload());
+        semaphore.setSize(packet.getPayload() / SRSC.MAX_PACKET_SIZE);
         semaphore.reset();
         
         for (byte acceptedCriticalPacket : acceptedCriticalPackets) {
@@ -73,7 +79,7 @@ public class PacketReader implements SerialPortDataListener {
     }
     
     private void processConnackPacket(Packet packet) {
-        semaphore.setSize(packet.getPayload());
+        semaphore.setSize(packet.getPayload() / SRSC.MAX_PACKET_SIZE);
         semaphore.reset();
         
         for (byte acceptedCriticalPacket : acceptedCriticalPackets) {
@@ -108,18 +114,22 @@ public class PacketReader implements SerialPortDataListener {
                 }
             }
 
-            Packet packet = buildPacket(binaryPacket);
+            try {
+                Packet packet = buildPacket(binaryPacket);
 
-            switch (packetType.getPacketTypeIdentifier()) {
-                case 0x00:
-                    processConnectPacket(packet);
-                    break;
-                case 0x01:
-                    processConnackPacket(packet);
-                    break;
-                default:
-                    onPacketArrivedCallback.onPacketArrived(packet);
-                    break;
+                switch (packetType.getPacketTypeIdentifier()) {
+                    case 0x00:
+                        processConnectPacket(packet);
+                        break;
+                    case 0x01:
+                        processConnackPacket(packet);
+                        break;
+                    default:
+                        onPacketArrivedCallback.onPacketArrived(packet);
+                        break;
+                }
+            } catch (Exception ex) {
+                Logger.getLogger(PacketReader.class.getName()).log(Level.SEVERE, null, ex);
             }
         } else {
             System.out.println("Arrived packet with unknown type!");
