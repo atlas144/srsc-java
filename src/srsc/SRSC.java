@@ -19,6 +19,7 @@ public class SRSC {
     private final Semaphore semaphore;
     private final PacketReader packetReader;
     private final PacketWriter packetWriter;
+    private byte criticalIdentifier = 0;
     
     public static final byte MAX_PACKET_SIZE = 7;
     
@@ -54,13 +55,25 @@ public class SRSC {
     }
     
     public void writePacket(PacketType packetType, int payload) {
-        for (int i = 0; i < (packetType.isCritical() ? 5 : 1); i++) {
+        if (packetType.isCritical()) {
+            for (int i = 0; i < 5; i++) {
+                packetWriter.writePacket(packetType, criticalIdentifier, payload);
+            }
+            
+            criticalIdentifier++;
+        } else {
             packetWriter.writePacket(packetType, payload);
         }
     }
     
     public void writePacket(PacketType packetType) throws Exception {
-        for (int i = 0; i < (packetType.isCritical() ? 5 : 1); i++) {
+        if (packetType.isCritical()) {
+            for (int i = 0; i < 5; i++) {
+                packetWriter.writePacket(packetType, criticalIdentifier);
+            }
+            
+            criticalIdentifier++;
+        } else {
             packetWriter.writePacket(packetType);
         }
     }
