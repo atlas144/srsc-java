@@ -13,7 +13,7 @@ import srsc.packet.PacketType;
 public class PacketWriter {
     
     private final SerialPort port;
-    private final Semaphore semaphore;
+    private final ConnectionStatusHandler connectionStatusHandler;
     
     private byte countChecksum(Packet packet, byte id) {
         byte checksum = (byte) (packet.getPacketTypeIdentifier() + id);
@@ -25,9 +25,9 @@ public class PacketWriter {
         return (byte) ~checksum;
     }
     
-    public PacketWriter(SerialPort port, Semaphore semaphore) {
+    public PacketWriter(SerialPort port, ConnectionStatusHandler connectionStatusHandler) {
         this.port = port;
-        this.semaphore = semaphore;
+        this.connectionStatusHandler = connectionStatusHandler;
     }
     
     public void writeAcceptackPacket() throws Exception {
@@ -53,7 +53,7 @@ public class PacketWriter {
         
         System.arraycopy(packet.getBinaryPayload(), 0, binaryPacket, payloadOffset, packet.getPayloadSize().getValue());
         
-        semaphore.decrease();
+        connectionStatusHandler.getSemaphore().decrease();
         port.writeBytes(binaryPacket, binaryPacketSize);
     }
     

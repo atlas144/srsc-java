@@ -14,19 +14,16 @@ import srsc.packet.PayloadSize;
 public class SRSC {
     
     private final SerialPort port;
-    private final ConnectionStatus connectionStatus;
+    private final ConnectionStatusHandler connectionStatusHandler;
     private final HashMap<Byte, PacketType> packetTypes;
-    private final Semaphore semaphore;
     private final PacketReader packetReader;
     private final PacketWriter packetWriter;
-    private byte criticalIdentifier = 0;
     
     public static final byte MAX_PACKET_SIZE = 7;
     
     public SRSC(byte port) {
-        connectionStatus = new ConnectionStatus();
+        connectionStatusHandler = new ConnectionStatusHandler();
         packetTypes = new HashMap<>();
-        semaphore = new Semaphore(9);
         final SerialPort[] ports = SerialPort.getCommPorts();
         
         if (port >= ports.length) {
@@ -35,8 +32,8 @@ public class SRSC {
             this.port = ports[port];
         }
         
-        packetWriter = new PacketWriter(this.port, semaphore);
-        packetReader = new PacketReader(this.port, connectionStatus, packetTypes, semaphore, packetWriter);
+        packetWriter = new PacketWriter(this.port, connectionStatusHandler);
+        packetReader = new PacketReader(this.port, connectionStatusHandler, packetTypes, packetWriter);
         
         packetTypes.put((byte) 0x00, new PacketType((byte) 0x00, PayloadSize.INT));
         packetTypes.put((byte) 0x01, new PacketType((byte) 0x01, PayloadSize.INT));
@@ -51,7 +48,7 @@ public class SRSC {
             try {
                 System.out.print("Connecting");
 
-                while (!connectionStatus.isConnected()) {    
+                while (!connectionStatusHandler.isConnected()) {    
                     try {
                         System.out.print(".");
                         packetWriter.writePacket(packetTypes.get(0x00), 0);
@@ -78,10 +75,8 @@ public class SRSC {
         
         if (packetTypeObject.isCritical()) {
             for (int i = 0; i < 5; i++) {
-                packetWriter.writePacket(packetTypeObject, criticalIdentifier, payload);
+                packetWriter.writePacket(packetTypeObject, connectionStatusHandler.useCriticalId(), payload);
             }
-            
-            criticalIdentifier++;
         } else {
             packetWriter.writePacket(packetTypeObject, payload);
         }
@@ -96,10 +91,8 @@ public class SRSC {
         
         if (packetTypeObject.isCritical()) {
             for (int i = 0; i < 5; i++) {
-                packetWriter.writePacket(packetTypeObject, criticalIdentifier);
+                packetWriter.writePacket(packetTypeObject, connectionStatusHandler.useCriticalId());
             }
-            
-            criticalIdentifier++;
         } else {
             packetWriter.writePacket(packetTypeObject);
         }

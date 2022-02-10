@@ -18,10 +18,8 @@ import srsc.packet.PayloadSize;
 public class PacketReader implements SerialPortDataListener {
 
     private final SerialPort port;
-    private final ConnectionStatus connectionStatus;
+    private final ConnectionStatusHandler connectionStatusHandler;
     private final HashMap<Byte, PacketType> packetTypes;
-    private final byte[] acceptedCriticalPackets;
-    private final Semaphore semaphore;
     private final PacketWriter packetWriter;
     private PacketArrivedCallback onPacketArrivedCallback;
     
@@ -66,14 +64,8 @@ public class PacketReader implements SerialPortDataListener {
     }
     
     private void processConnectPacket(Packet packet) {
-        semaphore.setSize(packet.getPayload() / SRSC.MAX_PACKET_SIZE);
-        semaphore.reset();
-        
-        for (byte acceptedCriticalPacket : acceptedCriticalPackets) {
-            acceptedCriticalPacket = (byte) 255;
-        }
-        
-        connectionStatus.setConnected(true);
+        connectionStatusHandler.getSemaphore().setSize(packet.getPayload() / SRSC.MAX_PACKET_SIZE);
+        connectionStatusHandler.resetConnection();
         System.out.println("Arrived CONNECT packet");
 
         try {
@@ -82,14 +74,8 @@ public class PacketReader implements SerialPortDataListener {
     }
     
     private void processConnackPacket(Packet packet) {
-        semaphore.setSize(packet.getPayload() / SRSC.MAX_PACKET_SIZE);
-        semaphore.reset();
-        
-        for (byte acceptedCriticalPacket : acceptedCriticalPackets) {
-            acceptedCriticalPacket = (byte) 255;
-        }
-    
-        connectionStatus.setConnected(true);    
+        connectionStatusHandler.getSemaphore().setSize(packet.getPayload() / SRSC.MAX_PACKET_SIZE);
+        connectionStatusHandler.resetConnection();
         System.out.println("Arrived CONNACK packet");
     }
     
@@ -99,13 +85,13 @@ public class PacketReader implements SerialPortDataListener {
         if (packetType == null) {
             System.out.println("Arrived packet with unknown type!");
             return;
-        } else if (!connectionStatus.isConnected() && packetType.getPacketTypeIdentifier() > 0x01) {
+        } else if (!connectionStatusHandler.isConnected() && packetType.getPacketTypeIdentifier() > 0x01) {
             return;
         }
         
         if (packetType.getPacketTypeIdentifier() == 0x02) {
             System.out.println("Arrived ACCEPTACK packet");
-            semaphore.increase();
+            connectionStatusHandler.getSemaphore().increase();
 
             return;
         }
@@ -117,10 +103,10 @@ public class PacketReader implements SerialPortDataListener {
         }
 
         if (packetType.isCritical()) {                
-            if (acceptedCriticalPackets[binaryPacket[2] % 10] == binaryPacket[2]) {
+            if (connectionStatusHandler.isAcceptedCriticalIdKnown(binaryPacket[2])) {
                 return;
             } else {
-                acceptedCriticalPackets[binaryPacket[2] % 10] = binaryPacket[2];
+                connectionStatusHandler.registerAcceptedCriticalId(binaryPacket[2]);
             }
         }
 
@@ -144,12 +130,10 @@ public class PacketReader implements SerialPortDataListener {
         }
     }
     
-    public PacketReader(SerialPort port, ConnectionStatus connectionStatus, HashMap<Byte, PacketType> packetTypes, Semaphore semaphore, PacketWriter packetWriter) {
+    public PacketReader(SerialPort port, ConnectionStatusHandler connectionStatusHandler, HashMap<Byte, PacketType> packetTypes, PacketWriter packetWriter) {
         this.port = port;
-        this.connectionStatus = connectionStatus;
+        this.connectionStatusHandler = connectionStatusHandler;
         this.packetTypes = packetTypes;
-        acceptedCriticalPackets = new byte[10];
-        this.semaphore = semaphore;
         this.packetWriter = packetWriter;
         onPacketArrivedCallback = (Packet packet) -> {};
     }
