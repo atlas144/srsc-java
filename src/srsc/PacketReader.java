@@ -136,7 +136,7 @@ public class PacketReader implements SerialPortDataListener {
                     break;
                 default:
                     onPacketArrivedCallback.onPacketArrived(packet);
-                    packetWriter.writePacket(new Packet(packetTypes.get(0x02)));
+                    packetWriter.writeAcceptackPacket();
                     break;
             }
         } catch (Exception exception) {

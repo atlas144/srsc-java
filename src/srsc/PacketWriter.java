@@ -30,6 +30,14 @@ public class PacketWriter {
         this.semaphore = semaphore;
     }
     
+    public void writeAcceptackPacket() throws Exception {
+        byte[] binaryPacket = new byte[1];
+        
+        binaryPacket[0] = 0x02;
+        
+        port.writeBytes(binaryPacket, 1);
+    }
+    
     public void writePacket(Packet packet, byte id) throws Exception {
         byte payloadOffset = 2;
         byte binaryPacketSize = (byte) (payloadOffset + (packet.isCritical() ? 1 : 0) + packet.getPacketType().getPayloadSize().getValue());
