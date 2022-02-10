@@ -35,7 +35,7 @@ public class SRSC {
             this.port = ports[port];
         }
         
-        packetWriter = new PacketWriter(this.port, connectionStatus);
+        packetWriter = new PacketWriter(this.port);
         packetReader = new PacketReader(this.port, connectionStatus, packetTypes, semaphore, packetWriter);
         
         packetTypes.put((byte) 0, new PacketType((byte) 0, PayloadSize.INT));
