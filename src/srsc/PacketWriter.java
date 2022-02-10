@@ -13,7 +13,6 @@ import srsc.packet.PacketType;
 public class PacketWriter {
     
     private final SerialPort port;
-    private final ConnectionStatus connectionStatus;
     
     private byte countChecksum(Packet packet, byte id) {
         byte checksum = (byte) (packet.getPacketTypeIdentifier() + id);
@@ -25,9 +24,8 @@ public class PacketWriter {
         return (byte) ~checksum;
     }
     
-    public PacketWriter(SerialPort port, ConnectionStatus connectionStatus) {
+    public PacketWriter(SerialPort port) {
         this.port = port;
-        this.connectionStatus = connectionStatus;
     }
     
     public void writePacket(Packet packet, byte id) {
