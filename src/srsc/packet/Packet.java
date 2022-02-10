@@ -2,6 +2,8 @@
 
 package srsc.packet;
 
+import srsc.exceptions.MissingPayloadException;
+
 /**
  *
  * @author atlas144
@@ -22,11 +24,11 @@ public class Packet {
         }
     }
     
-    public Packet(PacketType packetType) throws Exception {
+    public Packet(PacketType packetType) throws MissingPayloadException {
         this(packetType, 0);
         
         if (packetType.getPayloadSize() == PayloadSize.COMMAND) {
-            throw new Exception(String.format("Packet with type %d must have payload!", packetType.getPacketTypeIdentifier()));
+            throw new MissingPayloadException(packetType.getPacketTypeIdentifier());
         }
     }
 

@@ -3,6 +3,8 @@
 package srsc;
 
 import com.fazecast.jSerialComm.SerialPort;
+import srsc.exceptions.MissingPayloadException;
+import srsc.exceptions.SerialBufferFullException;
 import srsc.packet.Packet;
 import srsc.packet.PacketType;
 
@@ -30,7 +32,7 @@ public class PacketWriter {
         this.connectionStatusHandler = connectionStatusHandler;
     }
     
-    public void writeAcceptackPacket() throws Exception {
+    public void writeAcceptackPacket() {
         byte[] binaryPacket = new byte[1];
         
         binaryPacket[0] = 0x02;
@@ -38,7 +40,7 @@ public class PacketWriter {
         port.writeBytes(binaryPacket, 1);
     }
     
-    public void writePacket(Packet packet, byte id) throws Exception {
+    public void writePacket(Packet packet, byte id) throws SerialBufferFullException {
         byte payloadOffset = 2;
         byte binaryPacketSize = (byte) (payloadOffset + (packet.isCritical() ? 1 : 0) + packet.getPacketType().getPayloadSize().getValue());
         byte[] binaryPacket = new byte[binaryPacketSize];
@@ -57,23 +59,23 @@ public class PacketWriter {
         port.writeBytes(binaryPacket, binaryPacketSize);
     }
     
-    public void writePacket(Packet packet) throws Exception {
+    public void writePacket(Packet packet) throws SerialBufferFullException {
         writePacket(packet, (byte) 0);
     }
     
-    public void writePacket(PacketType packetType, byte id, int payload) throws Exception {
+    public void writePacket(PacketType packetType, byte id, int payload) throws SerialBufferFullException {
         writePacket(new Packet(packetType, payload), id);
     }
     
-    public void writePacket(PacketType packetType, int payload) throws Exception {
+    public void writePacket(PacketType packetType, int payload) throws SerialBufferFullException {
         writePacket(new Packet(packetType, payload));
     }
     
-    public void writePacket(PacketType packetType, byte id) throws Exception {
+    public void writePacket(PacketType packetType, byte id) throws SerialBufferFullException, MissingPayloadException {
         writePacket(new Packet(packetType), id);
     }
     
-    public void writePacket(PacketType packetType) throws Exception {
+    public void writePacket(PacketType packetType) throws SerialBufferFullException, MissingPayloadException {
         writePacket(new Packet(packetType));
     }
     

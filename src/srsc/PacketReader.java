@@ -7,6 +7,9 @@ import com.fazecast.jSerialComm.SerialPortDataListener;
 import com.fazecast.jSerialComm.SerialPortEvent;
 import java.util.Arrays;
 import java.util.HashMap;
+import srsc.exceptions.MissingPayloadException;
+import srsc.exceptions.PayloadParsingException;
+import srsc.exceptions.SerialBufferFullException;
 import srsc.packet.Packet;
 import srsc.packet.PacketType;
 import srsc.packet.PayloadSize;
@@ -33,9 +36,9 @@ public class PacketReader implements SerialPortDataListener {
         return validationSum == 255;
     }
     
-    private int parseBinaryPayload(byte[] binaryPayload) throws Exception {
+    private int parseBinaryPayload(byte[] binaryPayload) throws PayloadParsingException {
         if (binaryPayload.length < 1) {
-            throw new Exception("Packet payload parsing failed");
+            throw new PayloadParsingException();
         }
         
         int payload = binaryPayload[0];
@@ -47,8 +50,8 @@ public class PacketReader implements SerialPortDataListener {
         return payload;
     }
     
-    private Packet buildPacket(byte[] binaryPacket) throws Exception {
-        Packet packet;
+    private Packet buildPacket(byte[] binaryPacket) throws PayloadParsingException {
+        Packet packet = null;
         PacketType packetType = packetTypes.get(binaryPacket[0]);
         
         if (packetType.getPayloadSize() != PayloadSize.COMMAND) {
@@ -57,7 +60,9 @@ public class PacketReader implements SerialPortDataListener {
             
             packet = new Packet(packetType, payload);
         } else {
-            packet = new Packet(packetType);
+            try {
+                packet = new Packet(packetType);
+            } catch (MissingPayloadException exception) {}
         }
         
         return packet;
@@ -70,7 +75,7 @@ public class PacketReader implements SerialPortDataListener {
 
         try {
             packetWriter.writePacket(packetTypes.get(0x01), 0);
-        } catch (Exception ex) {}
+        } catch (SerialBufferFullException ex) {}
     }
     
     private void processConnackPacket(Packet packet) {
@@ -125,7 +130,7 @@ public class PacketReader implements SerialPortDataListener {
                     packetWriter.writeAcceptackPacket();
                     break;
             }
-        } catch (Exception exception) {
+        } catch (PayloadParsingException exception) {
             System.out.println(exception.getMessage());
         }
     }

@@ -2,6 +2,8 @@
 
 package srsc;
 
+import srsc.exceptions.SerialBufferFullException;
+
 /**
  *
  * @author atlas144
@@ -36,9 +38,9 @@ public class Semaphore {
         if (counter < size) counter++;
     }
     
-    public void decrease() throws Exception {
+    public void decrease() throws SerialBufferFullException {
         if (counter <= 0) {
-            throw new Exception("Oposite serial buffer is full!");
+            throw new SerialBufferFullException();
         }
         
         counter--;

@@ -5,6 +5,10 @@ package srsc;
 import srsc.packet.PacketType;
 import com.fazecast.jSerialComm.SerialPort;
 import java.util.HashMap;
+import srsc.exceptions.MissingPayloadException;
+import srsc.exceptions.SerialBufferFullException;
+import srsc.exceptions.UnknownPacketTypeException;
+import srsc.exceptions.UnknownPortException;
 import srsc.packet.PayloadSize;
 
 /**
@@ -21,13 +25,13 @@ public class SRSC {
     
     public static final byte MAX_PACKET_SIZE = 7;
     
-    public SRSC(byte port) {
+    public SRSC(byte port) throws UnknownPortException {
         connectionStatusHandler = new ConnectionStatusHandler();
         packetTypes = new HashMap<>();
         final SerialPort[] ports = SerialPort.getCommPorts();
         
         if (port >= ports.length) {
-            throw new IndexOutOfBoundsException("Given serial port number is not valid!");
+            throw new UnknownPortException(port);
         } else {
             this.port = ports[port];
         }
@@ -66,11 +70,11 @@ public class SRSC {
         connectionThread.start();
     }
     
-    public void writePacket(byte packetType, int payload) throws Exception {
+    public void writePacket(byte packetType, int payload) throws UnknownPacketTypeException, SerialBufferFullException {
         PacketType packetTypeObject = packetTypes.get(packetType);
         
         if (packetTypeObject == null) {
-            throw new Exception(String.format("Packet type %d is nod defined!", packetType));
+            throw new UnknownPacketTypeException(packetType);
         }
         
         if (packetTypeObject.isCritical()) {
@@ -82,11 +86,11 @@ public class SRSC {
         }
     }
     
-    public void writePacket(byte packetType) throws Exception {
+    public void writePacket(byte packetType) throws UnknownPacketTypeException, SerialBufferFullException, MissingPayloadException {
         PacketType packetTypeObject = packetTypes.get(packetType);
         
         if (packetTypeObject == null) {
-            throw new Exception(String.format("Packet type %d is nod defined!", packetType));
+            throw new UnknownPacketTypeException(packetType);
         }
         
         if (packetTypeObject.isCritical()) {
