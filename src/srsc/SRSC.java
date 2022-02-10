@@ -19,6 +19,8 @@ public class SRSC {
     private final Semaphore semaphore;
     private final PacketReader packetReader;
     
+    public static final byte MAX_PACKET_SIZE = 7;
+    
     public SRSC(byte port) {
         packetTypes = new HashMap<>();
         semaphore = new Semaphore(64);
