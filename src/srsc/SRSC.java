@@ -68,7 +68,7 @@ public class SRSC {
 
                 while (!connectionStatusHandler.isConnected()) {    
                     try {
-                        System.out.print("Sending CONNECT packet");
+                        System.out.println("Sending CONNECT packet");
                         packetWriter.writePacket(packetTypes.get(0x00), 0);
                         Thread.sleep(1000);
                     } catch (SerialBufferFullException ex) {
