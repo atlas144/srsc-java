@@ -12,14 +12,17 @@ public class Semaphore {
     
     private int size;
     private int counter;
+    private boolean unlimited;
     
     public Semaphore(int size) {
         this.size = size;
         counter = size;
+        unlimited = size == 0;
     }
 
     public void setSize(int size) {
         this.size = size;
+        unlimited = size == 0;
     }
 
     public int getSize() {
@@ -35,15 +38,19 @@ public class Semaphore {
     }
     
     public void increase() {
-        if (counter < size) counter++;
+        if (!unlimited) {
+            if (counter < size) counter++;
+        }
     }
     
     public void decrease() throws SerialBufferFullException {
-        if (counter <= 0) {
-            throw new SerialBufferFullException();
+        if (!unlimited) {
+            if (counter <= 0) {
+                throw new SerialBufferFullException();
+            }
+
+            counter--;
         }
-        
-        counter--;
     }
     
 }
