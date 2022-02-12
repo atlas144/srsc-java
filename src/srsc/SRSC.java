@@ -20,7 +20,7 @@ public class SRSC {
     
     private final SerialPort port;
     private final ConnectionStatusHandler connectionStatusHandler;
-    private final HashMap<Byte, PacketType> packetTypes;
+    private final HashMap<Integer, PacketType> packetTypes;
     private final PacketReader packetReader;
     private final PacketWriter packetWriter;
     
@@ -50,9 +50,9 @@ public class SRSC {
         packetWriter = new PacketWriter(this.port, connectionStatusHandler);
         packetReader = new PacketReader(this.port, connectionStatusHandler, packetTypes, packetWriter);
         
-        packetTypes.put((byte) 0x00, new PacketType((byte) 0x00, PayloadSize.INT));
-        packetTypes.put((byte) 0x01, new PacketType((byte) 0x01, PayloadSize.INT));
-        packetTypes.put((byte) 0x02, new PacketType((byte) 0x02, PayloadSize.COMMAND));
+        packetTypes.put(0x00, new PacketType((byte) 0x00, PayloadSize.INT));
+        packetTypes.put(0x01, new PacketType((byte) 0x01, PayloadSize.INT));
+        packetTypes.put(0x02, new PacketType((byte) 0x02, PayloadSize.COMMAND));
     }
     
     /**
@@ -68,9 +68,9 @@ public class SRSC {
 
                 while (!connectionStatusHandler.isConnected()) {    
                     try {
-                        System.out.print(".");
+                        System.out.print("Sending CONNECT packet");
                         packetWriter.writePacket(packetTypes.get(0x00), 0);
-                        Thread.sleep(500);
+                        Thread.sleep(1000);
                     } catch (SerialBufferFullException ex) {
                         System.out.println("\nOposite serial buffer is full - waiting for 5000 ms");
                         Thread.sleep(5000);
@@ -95,7 +95,7 @@ public class SRSC {
      * on the opponent side is full (the packet was probably not delivered 
      * - no more messages should be sent)
      */
-    public void writePacket(byte packetType, int payload) throws UnknownPacketTypeException, SerialBufferFullException {
+    public void writePacket(int packetType, int payload) throws UnknownPacketTypeException, SerialBufferFullException {
         PacketType packetTypeObject = packetTypes.get(packetType);
         
         if (packetTypeObject == null) {
@@ -122,7 +122,7 @@ public class SRSC {
      * @throws MissingPayloadException thrown if the given packet type requires 
      * payload
      */
-    public void writePacket(byte packetType) throws UnknownPacketTypeException, SerialBufferFullException, MissingPayloadException {
+    public void writePacket(int packetType) throws UnknownPacketTypeException, SerialBufferFullException, MissingPayloadException {
         PacketType packetTypeObject = packetTypes.get(packetType);
         
         if (packetTypeObject == null) {
@@ -145,8 +145,8 @@ public class SRSC {
      * @param payloadSize 0/1/2/4 bytes
      * @param isCritical says whether to treat the packet as critical
      */
-    public void definePacketType(byte packetTypeIdentifier, PayloadSize payloadSize, boolean isCritical) {        
-        packetTypes.put(packetTypeIdentifier, new PacketType(packetTypeIdentifier, payloadSize, isCritical));
+    public void definePacketType(int packetTypeIdentifier, PayloadSize payloadSize, boolean isCritical) {        
+        packetTypes.put(packetTypeIdentifier, new PacketType((byte) packetTypeIdentifier, payloadSize, isCritical));
     }
     
     /**

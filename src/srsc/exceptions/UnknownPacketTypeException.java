@@ -8,7 +8,7 @@ package srsc.exceptions;
  */
 public class UnknownPacketTypeException extends Exception {
     
-    public UnknownPacketTypeException(byte packetType) {
+    public UnknownPacketTypeException(int packetType) {
         super(String.format("Packet type %d is nod defined!", packetType));
     }
     

@@ -22,7 +22,7 @@ public class PacketReader implements SerialPortDataListener {
 
     private final SerialPort port;
     private final ConnectionStatusHandler connectionStatusHandler;
-    private final HashMap<Byte, PacketType> packetTypes;
+    private final HashMap<Integer, PacketType> packetTypes;
     private final PacketWriter packetWriter;
     private PacketArrivedCallback onPacketArrivedCallback;
     
@@ -52,7 +52,7 @@ public class PacketReader implements SerialPortDataListener {
     
     private Packet buildPacket(byte[] binaryPacket) throws PayloadParsingException {
         Packet packet = null;
-        PacketType packetType = packetTypes.get(binaryPacket[0]);
+        PacketType packetType = packetTypes.get((int) binaryPacket[0]);
         
         if (packetType.getPayloadSize() != PayloadSize.COMMAND) {
             int payloadOffset = packetType.isCritical() ? 3 : 2;
@@ -85,7 +85,7 @@ public class PacketReader implements SerialPortDataListener {
     }
     
     private void processBinaryPacket(byte[] binaryPacket) {
-        PacketType packetType = packetTypes.get(binaryPacket[0]);
+        PacketType packetType = packetTypes.get((int) binaryPacket[0]);
         
         if (packetType == null) {
             System.out.println("Arrived packet with unknown type!");
@@ -135,7 +135,7 @@ public class PacketReader implements SerialPortDataListener {
         }
     }
     
-    public PacketReader(SerialPort port, ConnectionStatusHandler connectionStatusHandler, HashMap<Byte, PacketType> packetTypes, PacketWriter packetWriter) {
+    public PacketReader(SerialPort port, ConnectionStatusHandler connectionStatusHandler, HashMap<Integer, PacketType> packetTypes, PacketWriter packetWriter) {
         this.port = port;
         this.connectionStatusHandler = connectionStatusHandler;
         this.packetTypes = packetTypes;
