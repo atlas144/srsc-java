@@ -14,7 +14,7 @@ public class ConnectionStatusHandler {
     private byte criticalPacketIdentifier;
     
     public ConnectionStatusHandler() {
-        semaphore = new Semaphore(9);
+        semaphore = new Semaphore(0);
         acceptedCriticalIdentifiers = new byte[10];
         connected = false;
         criticalPacketIdentifier = 0;
