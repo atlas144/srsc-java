@@ -30,6 +30,11 @@ public class SRSC {
     public static final byte MAX_PACKET_SIZE = 7;
     
     /**
+     * Number of times the critical packet is sent (protocol defines as 5).
+     */
+    public static final byte CRITICAL_PACKET_REPETITION = 5;
+    
+    /**
      * Builds SRSC API object.
      * @param port serial port number to which the communication opponent 
      * is connected 
@@ -77,8 +82,8 @@ public class SRSC {
     /**
      * Sends packet with <i>packetType</i> and <i>payload</i>.
      * @param packetType type of packet. It must be registered first.
-     * @param payload the message the packet carries. It must be a number that 
-     * is less than or equal to the payload size for the packet type.
+     * @param payload the message the packet carries. It must be a number which 
+     * size is less than or equal to the payload size for the packet type.
      * @throws UnknownPacketTypeException thrown if packet type has not been 
      * registered yet
      * @throws SerialBufferFullException thrown if the serial buffer 
@@ -93,8 +98,10 @@ public class SRSC {
         }
         
         if (packetTypeObject.isCritical()) {
-            for (int i = 0; i < 5; i++) {
-                packetWriter.writePacket(packetTypeObject, connectionStatusHandler.useCriticalId(), payload);
+            byte id = connectionStatusHandler.useCriticalId();
+            
+            for (int i = 0; i < CRITICAL_PACKET_REPETITION; i++) {
+                packetWriter.writePacket(packetTypeObject, id, payload);
             }
         } else {
             packetWriter.writePacket(packetTypeObject, payload);
@@ -120,8 +127,10 @@ public class SRSC {
         }
         
         if (packetTypeObject.isCritical()) {
-            for (int i = 0; i < 5; i++) {
-                packetWriter.writePacket(packetTypeObject, connectionStatusHandler.useCriticalId());
+            byte id = connectionStatusHandler.useCriticalId();
+            
+            for (int i = 0; i < CRITICAL_PACKET_REPETITION; i++) {
+                packetWriter.writePacket(packetTypeObject, id);
             }
         } else {
             packetWriter.writePacket(packetTypeObject);
