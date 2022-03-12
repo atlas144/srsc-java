@@ -22,8 +22,20 @@ public class SemaphoreTest {
     
     @Test
     public void testSetSize() {
+        final int testInitialSize = 1;
         final int testSize = 2;
-        final Semaphore semaphore = new Semaphore(1);
+        final Semaphore semaphore = new Semaphore(testInitialSize);
+        
+        semaphore.setSize(testSize);
+        
+        Assert.assertEquals(testSize, semaphore.getSize());
+    }
+    
+    @Test
+    public void testSetSizeUnlimited() {
+        final int testInitialSize = 1;
+        final int testSize = 0;
+        final Semaphore semaphore = new Semaphore(testInitialSize);
         
         semaphore.setSize(testSize);
         
@@ -51,6 +63,21 @@ public class SemaphoreTest {
         }
         
         Assert.assertEquals(testSpace - decrease, semaphore.getSpace());
+    }
+    
+    @Test
+    public void testDecreaseUnlimited() {
+        final int testSpace = 0;
+        final int decrease = 3;
+        final Semaphore semaphore = new Semaphore(testSpace);
+        
+        for (int i = 0; i < decrease; i++) {
+            try {
+                semaphore.decrease();
+            } catch (SerialBufferFullException ex) {}
+        }
+        
+        Assert.assertEquals(testSpace, semaphore.getSpace());
     }
     
     @Test
@@ -88,6 +115,26 @@ public class SemaphoreTest {
         }
         
         Assert.assertEquals(testSpace - decrease + increase, semaphore.getSpace());
+    }
+    
+    @Test
+    public void testIncreaseUnlimited() {
+        final int testSpace = 0;
+        final int decrease = 3;
+        final int increase = 2;
+        final Semaphore semaphore = new Semaphore(testSpace);
+        
+        for (int i = 0; i < decrease; i++) {
+            try {
+                semaphore.decrease();
+            } catch (SerialBufferFullException ex) {}
+        }
+        
+        for (int i = 0; i < increase; i++) {
+            semaphore.increase();
+        }
+        
+        Assert.assertEquals(testSpace, semaphore.getSpace());
     }
     
     @Test
