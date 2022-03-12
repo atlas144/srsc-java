@@ -17,13 +17,13 @@ import srsc.packet.PayloadSize;
 public class PacketProcessor {
     
     public static boolean validateChecksum(byte[] binaryPacket) {
-        int validationSum = 0;
+        byte validationSum = 0;
 
         for (byte packetByte : binaryPacket) {
-            validationSum += Byte.toUnsignedInt(packetByte);
+            validationSum += packetByte;
         }
 
-        return (validationSum & 0xff) == 0xff;
+        return validationSum == 255;
     }
     
     public static int parseBinaryPayload(byte[] binaryPayload) throws PayloadParsingException {
