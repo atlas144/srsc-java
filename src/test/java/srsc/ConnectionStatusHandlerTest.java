@@ -12,12 +12,26 @@ import org.junit.Test;
 public class ConnectionStatusHandlerTest {
     
     @Test
-    public void testAcceptedCriticalIdRegistration() {
+    public void testGetSemaphore() {
+        final ConnectionStatusHandler connectionStatusHandler = new ConnectionStatusHandler();
+        
+        Assert.assertNotNull(connectionStatusHandler.getSemaphore());
+    }
+    
+    @Test
+    public void testAcceptedCriticalIdKnown() {
         final ConnectionStatusHandler connectionStatusHandler = new ConnectionStatusHandler();
         
         connectionStatusHandler.registerAcceptedCriticalId((byte) 5);
         
         Assert.assertTrue(connectionStatusHandler.isAcceptedCriticalIdKnown((byte) 5));
+    }
+    
+    @Test
+    public void testAcceptedCriticalIdNotKnown() {
+        final ConnectionStatusHandler connectionStatusHandler = new ConnectionStatusHandler();
+        
+        Assert.assertFalse(connectionStatusHandler.isAcceptedCriticalIdKnown((byte) 5));
     }
     
     @Test
@@ -60,6 +74,18 @@ public class ConnectionStatusHandlerTest {
             connectionStatusHandler.useCriticalId();
         }
         
+        Assert.assertEquals(0, connectionStatusHandler.useCriticalId());
+    }
+    
+    @Test
+    public void testResetConnection() {
+        final ConnectionStatusHandler connectionStatusHandler = new ConnectionStatusHandler();
+        
+        connectionStatusHandler.disconnect();
+        connectionStatusHandler.useCriticalId();
+        connectionStatusHandler.resetConnection();
+        
+        Assert.assertTrue(connectionStatusHandler.isConnected());
         Assert.assertEquals(0, connectionStatusHandler.useCriticalId());
     }
     
