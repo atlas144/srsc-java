@@ -5,14 +5,11 @@ package srsc;
 import com.fazecast.jSerialComm.SerialPort;
 import com.fazecast.jSerialComm.SerialPortDataListener;
 import com.fazecast.jSerialComm.SerialPortEvent;
-import java.util.Arrays;
 import java.util.HashMap;
-import srsc.exceptions.MissingPayloadException;
 import srsc.exceptions.PayloadParsingException;
 import srsc.exceptions.SerialBufferFullException;
 import srsc.packet.Packet;
 import srsc.packet.PacketType;
-import srsc.packet.PayloadSize;
 
 /**
  *
@@ -25,48 +22,6 @@ public class PacketReader implements SerialPortDataListener {
     private final HashMap<Integer, PacketType> packetTypes;
     private final PacketWriter packetWriter;
     private PacketArrivedCallback onPacketArrivedCallback;
-    
-    private boolean validateChecksum(byte[] binaryPacket) {
-        byte validationSum = 0;
-
-        for (byte packetByte : binaryPacket) {
-            validationSum += packetByte;
-        }
-
-        return validationSum == 255;
-    }
-    
-    private int parseBinaryPayload(byte[] binaryPayload) throws PayloadParsingException {
-        if (binaryPayload.length < 1) {
-            throw new PayloadParsingException();
-        }
-        
-        int payload = binaryPayload[0];
-
-        for (byte i = 1; i < binaryPayload.length; i++) {
-            payload += binaryPayload[i] * (256 * i);
-        }
-        
-        return payload;
-    }
-    
-    private Packet buildPacket(byte[] binaryPacket) throws PayloadParsingException {
-        Packet packet = null;
-        PacketType packetType = packetTypes.get((int) binaryPacket[0]);
-        
-        if (packetType.getPayloadSize() != PayloadSize.COMMAND) {
-            int payloadOffset = packetType.isCritical() ? 3 : 2;
-            int payload = parseBinaryPayload(Arrays.copyOfRange(binaryPacket, payloadOffset, payloadOffset + packetType.getPayloadSize().getValue()));
-            
-            packet = new Packet(packetType, payload);
-        } else {
-            try {
-                packet = new Packet(packetType);
-            } catch (MissingPayloadException exception) {}
-        }
-        
-        return packet;
-    }
     
     private void processConnectPacket(Packet packet) {
         connectionStatusHandler.getSemaphore().setSize(packet.getPayload() / SRSC.MAX_PACKET_SIZE);
@@ -101,7 +56,7 @@ public class PacketReader implements SerialPortDataListener {
             return;
         }
 
-        if (!validateChecksum(binaryPacket)) {
+        if (!PacketProcessor.validateChecksum(binaryPacket)) {
             System.out.println("Arrived corrupted packet!");
 
             return;
@@ -116,7 +71,7 @@ public class PacketReader implements SerialPortDataListener {
         }
 
         try {
-            Packet packet = buildPacket(binaryPacket);
+            Packet packet = PacketProcessor.buildPacketObject(binaryPacket, packetTypes);
 
             switch (packetType.getPacketTypeIdentifier()) {
                 case 0x00:
