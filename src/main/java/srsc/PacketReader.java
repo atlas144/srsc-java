@@ -39,54 +39,56 @@ public class PacketReader implements SerialPortDataListener {
         System.out.println("Arrived CONNACK packet");
     }
     
+    private void processAcceptackPacket() {
+        connectionStatusHandler.getSemaphore().increase();
+        System.out.println("Arrived ACCEPTACK packet");
+    }
+    
     private void processBinaryPacket(byte[] binaryPacket) {
         PacketType packetType = packetTypes.get((int) binaryPacket[0]);
         
-        if (packetType == null) {
+        if (packetType != null) {
+            if (connectionStatusHandler.isConnected() || packetType.getPacketTypeIdentifier() < 0x02) {
+                if (packetType.getPacketTypeIdentifier() == 0x02) {
+                    processAcceptackPacket();
+                } else {
+                    if (PacketProcessor.validateChecksum(binaryPacket)) {
+                        if (packetType.isCritical()) {                
+                            if (connectionStatusHandler.isAcceptedCriticalIdKnown(binaryPacket[2])) {
+                                return;
+                            } else {
+                                connectionStatusHandler.registerAcceptedCriticalId(binaryPacket[2]);
+                            }
+                        }
+                        
+                        try {
+                            Packet packet = PacketProcessor.buildPacketObject(binaryPacket, packetTypes);
+
+                            switch (packetType.getPacketTypeIdentifier()) {
+                                case 0x00:
+                                    processConnectPacket(packet);
+                                    break;
+                                case 0x01:
+                                    processConnackPacket(packet);
+                                    break;
+                                case 0x02:
+                                    processAcceptackPacket();
+                                    break;
+                                default:
+                                    onPacketArrivedCallback.onPacketArrived(packet);
+                                    packetWriter.writeAcceptackPacket();
+                                    break;
+                            }
+                        } catch (PayloadParsingException exception) {
+                            System.out.println(exception.getMessage());
+                        }
+                    } else {
+                        System.out.println("Arrived corrupted packet!");
+                    }
+                }
+            }
+        } else {
             System.out.println("Arrived packet with unknown type!");
-            return;
-        } else if (!connectionStatusHandler.isConnected() && packetType.getPacketTypeIdentifier() > 0x01) {
-            return;
-        }
-        
-        if (packetType.getPacketTypeIdentifier() == 0x02) {
-            System.out.println("Arrived ACCEPTACK packet");
-            connectionStatusHandler.getSemaphore().increase();
-
-            return;
-        }
-
-        if (!PacketProcessor.validateChecksum(binaryPacket)) {
-            System.out.println("Arrived corrupted packet!");
-
-            return;
-        }
-
-        if (packetType.isCritical()) {                
-            if (connectionStatusHandler.isAcceptedCriticalIdKnown(binaryPacket[2])) {
-                return;
-            } else {
-                connectionStatusHandler.registerAcceptedCriticalId(binaryPacket[2]);
-            }
-        }
-
-        try {
-            Packet packet = PacketProcessor.buildPacketObject(binaryPacket, packetTypes);
-
-            switch (packetType.getPacketTypeIdentifier()) {
-                case 0x00:
-                    processConnectPacket(packet);
-                    break;
-                case 0x01:
-                    processConnackPacket(packet);
-                    break;
-                default:
-                    onPacketArrivedCallback.onPacketArrived(packet);
-                    packetWriter.writeAcceptackPacket();
-                    break;
-            }
-        } catch (PayloadParsingException exception) {
-            System.out.println(exception.getMessage());
         }
     }
     
