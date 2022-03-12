@@ -31,10 +31,10 @@ public class PacketProcessor {
             throw new PayloadParsingException();
         }
         
-        int payload = binaryPayload[0];
+        int payload = 0;
 
-        for (byte i = 1; i < binaryPayload.length; i++) {
-            payload += binaryPayload[i] * (256 * i);
+        for (byte i = 0; i < binaryPayload.length; i++) {
+            payload |= binaryPayload[i] << (8 * i);
         }
         
         return payload;
