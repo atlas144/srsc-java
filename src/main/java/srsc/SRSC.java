@@ -34,6 +34,12 @@ public class SRSC {
      */
     public static final byte CRITICAL_PACKET_REPETITION = 5;
     
+    private void registerProtocolPacketTypes() {
+        packetTypes.put(0x00, new PacketType((byte) 0x00, PayloadSize.INT));
+        packetTypes.put(0x01, new PacketType((byte) 0x01, PayloadSize.INT));
+        packetTypes.put(0x02, new PacketType((byte) 0x02, PayloadSize.COMMAND));
+    }
+    
     /**
      * Builds SRSC API object.
      * @param port serial port number to which the communication opponent 
@@ -55,9 +61,7 @@ public class SRSC {
         packetWriter = new PacketWriter(this.port, connectionStatusHandler);
         packetReader = new PacketReader(this.port, connectionStatusHandler, packetTypes, packetWriter);
         
-        packetTypes.put(0x00, new PacketType((byte) 0x00, PayloadSize.INT));
-        packetTypes.put(0x01, new PacketType((byte) 0x01, PayloadSize.INT));
-        packetTypes.put(0x02, new PacketType((byte) 0x02, PayloadSize.COMMAND));
+        registerProtocolPacketTypes();
     }
     
     /**
