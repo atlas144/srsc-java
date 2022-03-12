@@ -56,32 +56,22 @@ public class SRSC {
     }
     
     /**
-     * Starts connection with opponent.
+     * Starts connection with opponent. The method blocks until the connection 
+     * is established.
      */
     public void begin() {
         port.openPort();
         port.addDataListener(packetReader);
            
-        Thread connectionThread = new Thread(() -> {
-            try {
-                System.out.print("Connecting");
+        System.out.print("Connecting");
 
-                while (!connectionStatusHandler.isConnected()) {    
-                    try {
-                        System.out.println("Sending CONNECT packet");
-                        packetWriter.writePacket(packetTypes.get(0x00), 0);
-                        Thread.sleep(1000);
-                    } catch (SerialBufferFullException ex) {
-                        System.out.println("\nOposite serial buffer is full - waiting for 5000 ms");
-                        Thread.sleep(5000);
-                    }
-                }
-                
-                System.out.println();
-            } catch (InterruptedException ex) {}
-        });
-        
-        connectionThread.start();
+        while (!connectionStatusHandler.isConnected()) {    
+            try {
+                System.out.println("Sending CONNECT packet");
+                packetWriter.writePacket(packetTypes.get(0x00), 0);
+                Thread.sleep(1000);
+            } catch (SerialBufferFullException | InterruptedException ex) {}
+        }
     }
     
     /**
