@@ -2,6 +2,7 @@
 
 package srsc.packet;
 
+import srsc.PacketProcessor;
 import srsc.exceptions.MissingPayloadException;
 
 /**
@@ -17,11 +18,7 @@ public class Packet {
     public Packet(PacketType packetType, int payload) {
         this.packetType = packetType;
         this.payload = payload;
-        binaryPayload = new byte[packetType.getPayloadSize().getValue()];
-        
-        for (byte i = 0; i < binaryPayload.length; i++) {
-            binaryPayload[i] = (byte) (payload >> (i * 8));
-        }
+        binaryPayload = PacketProcessor.parsePayload(payload, packetType.getPayloadSize());
     }
     
     public Packet(PacketType packetType) throws MissingPayloadException {
