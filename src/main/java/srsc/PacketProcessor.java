@@ -26,6 +26,16 @@ public class PacketProcessor {
         return (validationSum & 0xff) == 0xff;
     }
     
+    public static byte[] parsePayload(int payload, PayloadSize payloadSize) {
+        byte[] binaryPayload = new byte[payloadSize.getValue()];
+
+        for (byte i = 0; i < binaryPayload.length; i++) {
+            binaryPayload[i] = (byte) ((payload >> (8 * i)) & 0xff);
+        }
+        
+        return binaryPayload;
+    }
+    
     public static int parseBinaryPayload(byte[] binaryPayload) throws PayloadParsingException {
         if (binaryPayload.length < 1) {
             throw new PayloadParsingException();
@@ -36,10 +46,10 @@ public class PacketProcessor {
         for (byte i = 0; i < binaryPayload.length; i++) {
             payload |= binaryPayload[i] << (8 * i);
         }
-        
+
         return payload;
     }
-    
+
     public static Packet buildPacketObject(byte[] binaryPacket, HashMap<Integer, PacketType> packetTypes) throws PayloadParsingException {
         Packet packet = null;
         PacketType packetType = packetTypes.get((int) binaryPacket[0]);
