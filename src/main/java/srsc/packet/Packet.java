@@ -27,7 +27,7 @@ public class Packet {
     public Packet(PacketType packetType) throws MissingPayloadException {
         this(packetType, 0);
         
-        if (packetType.getPayloadSize() == PayloadSize.COMMAND) {
+        if (packetType.getPayloadSize() != PayloadSize.COMMAND) {
             throw new MissingPayloadException(packetType.getPacketTypeIdentifier());
         }
     }
