@@ -1,167 +1,96 @@
 // SPDX-License-Identifier: MIT
 
-package srsc;
+package srsc.packet;
 
 import org.junit.Assert;
 import org.junit.Test;
-import srsc.exceptions.SerialBufferFullException;
+import srsc.exceptions.MissingPayloadException;
 
 /**
  *
  * @author atlas144
  */
-public class SemaphoreTest {
+public class PacketTest {
     
     @Test
-    public void testGetSize() {
-        final int testSize = 2;
-        final Semaphore semaphore = new Semaphore(testSize);
-        
-        Assert.assertEquals(testSize, semaphore.getSize());
-    }
-    
-    @Test
-    public void testSetSize() {
-        final int testInitialSize = 1;
-        final int testSize = 2;
-        final Semaphore semaphore = new Semaphore(testInitialSize);
-        
-        semaphore.setSize(testSize);
-        
-        Assert.assertEquals(testSize, semaphore.getSize());
-    }
-    
-    @Test
-    public void testSetSizeUnlimited() {
-        final int testInitialSize = 1;
-        final int testSize = 0;
-        final Semaphore semaphore = new Semaphore(testInitialSize);
-        
-        semaphore.setSize(testSize);
-        
-        Assert.assertEquals(testSize, semaphore.getSize());
-    }
-    
-    @Test
-    public void testGetSpace() {
-        final int testSpace = 2;
-        final Semaphore semaphore = new Semaphore(testSpace);
-        
-        Assert.assertEquals(testSpace, semaphore.getSpace());
-    }
-    
-    @Test
-    public void testDecrease() {
-        final int testSpace = 5;
-        final int decrease = 3;
-        final Semaphore semaphore = new Semaphore(testSpace);
-        
-        for (int i = 0; i < decrease; i++) {
-            try {
-                semaphore.decrease();
-            } catch (SerialBufferFullException ex) {}
-        }
-        
-        Assert.assertEquals(testSpace - decrease, semaphore.getSpace());
-    }
-    
-    @Test
-    public void testDecreaseUnlimited() {
-        final int testSpace = 0;
-        final int decrease = 3;
-        final Semaphore semaphore = new Semaphore(testSpace);
-        
-        for (int i = 0; i < decrease; i++) {
-            try {
-                semaphore.decrease();
-            } catch (SerialBufferFullException ex) {}
-        }
-        
-        Assert.assertEquals(testSpace, semaphore.getSpace());
-    }
-    
-    @Test
-    public void testDecreaseWithEmptyCounter() {
-        final int testSpace = 3;
-        final int decrease = 3;
-        final Semaphore semaphore = new Semaphore(testSpace);
-        
-        for (int i = 0; i < decrease; i++) {
-            try {
-                semaphore.decrease();
-            } catch (SerialBufferFullException ex) {}
-        }
-        
-        Assert.assertThrows(SerialBufferFullException.class, () -> {
-            semaphore.decrease();
+    public void testNoPayloadConstructorError() {
+        PacketType testPacketType = new PacketType((byte) 0x00, PayloadSize.INT);
+            
+        Assert.assertThrows(MissingPayloadException.class, () -> {
+            new Packet(testPacketType);
         });
     }
     
     @Test
-    public void testIncrease() {
-        final int testSpace = 5;
-        final int decrease = 3;
-        final int increase = 2;
-        final Semaphore semaphore = new Semaphore(testSpace);
-        
-        for (int i = 0; i < decrease; i++) {
-            try {
-                semaphore.decrease();
-            } catch (SerialBufferFullException ex) {}
-        }
-        
-        for (int i = 0; i < increase; i++) {
-            semaphore.increase();
-        }
-        
-        Assert.assertEquals(testSpace - decrease + increase, semaphore.getSpace());
+    public void testGetPacketType() {
+        PacketType testPacketType = null;
+        Packet testPacket = null;
+            
+        try {
+            testPacketType = new PacketType((byte) 0x00, PayloadSize.COMMAND);
+            testPacket = new Packet(testPacketType);
+        } catch (MissingPayloadException ex) {}
+            
+        Assert.assertEquals(testPacketType, testPacket.getPacketType());
     }
     
     @Test
-    public void testIncreaseUnlimited() {
-        final int testSpace = 0;
-        final int decrease = 3;
-        final int increase = 2;
-        final Semaphore semaphore = new Semaphore(testSpace);
-        
-        for (int i = 0; i < decrease; i++) {
-            try {
-                semaphore.decrease();
-            } catch (SerialBufferFullException ex) {}
-        }
-        
-        for (int i = 0; i < increase; i++) {
-            semaphore.increase();
-        }
-        
-        Assert.assertEquals(testSpace, semaphore.getSpace());
+    public void testGetPacketTypeIdentifier() {
+        PacketType testPacketType = null;
+        Packet testPacket = null;
+            
+        try {
+            testPacketType = new PacketType((byte) 0x00, PayloadSize.COMMAND);
+            testPacket = new Packet(testPacketType);
+        } catch (MissingPayloadException ex) {}
+            
+        Assert.assertEquals(testPacketType.getPacketTypeIdentifier(), testPacket.getPacketTypeIdentifier());
     }
     
     @Test
-    public void testIncreaseWithFullCounter() {
-        final int testSpace = 5;
-        final Semaphore semaphore = new Semaphore(testSpace);
-        
-        semaphore.increase();
-        
-        Assert.assertEquals(testSpace, semaphore.getSpace());
+    public void testGetPayloadSize() {
+        PacketType testPacketType = null;
+        Packet testPacket = null;
+            
+        try {
+            testPacketType = new PacketType((byte) 0x00, PayloadSize.COMMAND);
+            testPacket = new Packet(testPacketType);
+        } catch (MissingPayloadException ex) {}
+            
+        Assert.assertEquals(testPacketType.getPayloadSize(), testPacket.getPayloadSize());
     }
     
     @Test
-    public void testReset() {
-        final int testSpace = 5;
-        final int decrease = 3;
-        final Semaphore semaphore = new Semaphore(testSpace);
-        
-        for (int i = 0; i < decrease; i++) {
-            try {
-                semaphore.decrease();
-            } catch (SerialBufferFullException ex) {}
-        }
-        
-        semaphore.reset();
-        
-        Assert.assertEquals(testSpace, semaphore.getSpace());
+    public void testIsCritical() {
+        final PacketType testPacketType = new PacketType((byte) 0x00, PayloadSize.INT, true);
+        final int testPayload = 0x01020304;
+        final Packet testPacket = new Packet(testPacketType, testPayload);
+            
+        Assert.assertTrue(testPacket.isCritical());
+    }
+    
+    @Test
+    public void testGetPayload() {
+        final PacketType testPacketType = new PacketType((byte) 0x00, PayloadSize.INT);
+        final int testPayload = 0x01020304;
+        final Packet testPacket = new Packet(testPacketType, testPayload);
+            
+        Assert.assertEquals(testPayload, testPacket.getPayload());
+    }
+    
+    @Test
+    public void testGetBinaryPayload() {
+        final PacketType testPacketType = new PacketType((byte) 0x00, PayloadSize.INT);
+        final int testPayload = 0x01020304;
+        final byte[] testBinaryPayload = {
+            0x04,
+            0x03,
+            0x02,
+            0x01
+        };
+        final Packet testPacket = new Packet(testPacketType, testPayload);
+            
+        Assert.assertArrayEquals(testBinaryPayload, testPacket.getBinaryPayload());
     }
     
 }
