@@ -6,7 +6,6 @@ import com.fazecast.jSerialComm.SerialPort;
 import com.fazecast.jSerialComm.SerialPortDataListener;
 import com.fazecast.jSerialComm.SerialPortEvent;
 import java.util.HashMap;
-import srsc.exceptions.PayloadParsingException;
 import srsc.exceptions.SerialBufferFullException;
 import srsc.packet.Packet;
 import srsc.packet.PacketType;
@@ -61,26 +60,19 @@ public class PacketReader implements SerialPortDataListener {
                             }
                         }
                         
-                        try {
-                            Packet packet = PacketProcessor.buildPacketObject(binaryPacket, packetTypes);
+                        Packet packet = PacketProcessor.buildPacketObject(binaryPacket, packetTypes);
 
-                            switch (packetType.getPacketTypeIdentifier()) {
-                                case 0x00:
-                                    processConnectPacket(packet);
-                                    break;
-                                case 0x01:
-                                    processConnackPacket(packet);
-                                    break;
-                                case 0x02:
-                                    processAcceptackPacket();
-                                    break;
-                                default:
-                                    onPacketArrivedCallback.onPacketArrived(packet);
-                                    packetWriter.writeAcceptackPacket();
-                                    break;
-                            }
-                        } catch (PayloadParsingException exception) {
-                            System.out.println(exception.getMessage());
+                        switch (packetType.getPacketTypeIdentifier()) {
+                            case 0x00:
+                                processConnectPacket(packet);
+                                break;
+                            case 0x01:
+                                processConnackPacket(packet);
+                                break;
+                            default:
+                                onPacketArrivedCallback.onPacketArrived(packet);
+                                packetWriter.writeAcceptackPacket();
+                                break;
                         }
                     } else {
                         System.out.println("Arrived corrupted packet!");

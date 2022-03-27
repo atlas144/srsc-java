@@ -36,11 +36,7 @@ public class PacketProcessor {
         return binaryPayload;
     }
     
-    public static int parseBinaryPayload(byte[] binaryPayload) throws PayloadParsingException {
-        if (binaryPayload.length < 1) {
-            throw new PayloadParsingException();
-        }
-        
+    public static int parseBinaryPayload(byte[] binaryPayload) {        
         int payload = 0;
 
         for (byte i = 0; i < binaryPayload.length; i++) {
@@ -50,7 +46,7 @@ public class PacketProcessor {
         return payload;
     }
 
-    public static Packet buildPacketObject(byte[] binaryPacket, HashMap<Integer, PacketType> packetTypes) throws PayloadParsingException {
+    public static Packet buildPacketObject(byte[] binaryPacket, HashMap<Integer, PacketType> packetTypes) {
         Packet packet = null;
         PacketType packetType = packetTypes.get((int) binaryPacket[0]);
         
